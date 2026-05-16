@@ -1,40 +1,92 @@
 module.exports = {
+  requires: {
+    bundle: "ai",
+  },
   run: [
-    // Edit this step to customize the git repository to use
     {
+      when: "{{!exists('app')}}",
       method: "shell.run",
       params: {
         message: [
-          "git clone https://github.com/sunnyxrxrx/X-Voice app",
+          "git clone --recursive https://github.com/6Morpheus6/XVoice app",
         ]
       }
     },
-    // Edit this step with your custom install commands
     {
       method: "shell.run",
       params: {
-        venv: "env",                // Edit this to customize the venv folder path
-        path: "app",                // Edit this to customize the path to start the shell from
+      conda: {
+        path: "conda_env",
+        python: "python=3.10.16"
+        },
+        path: "app",
         message: [
-          "uv pip install gradio devicetorch",
-          "uv pip install -r requirements.txt"
+          "conda install -y -c conda-forge pynini"
         ]
       }
     },
-    // Delete this step if your project does not use torch
+    {
+      method: "shell.run",
+      params: {
+        conda: "conda_env",
+        path: "app",
+        message: [
+          "uv pip install nemo_text_processing --no-deps",
+          "uv pip install -e ."
+        ]
+      }
+    },
     {
       method: "script.start",
       params: {
         uri: "torch.js",
         params: {
-          venv: "env",                // Edit this to customize the venv folder path
-          path: "app",                // Edit this to customize the path to start the shell from
-          // flashattention: true   // uncomment this line if your project requires flashattention
-          // xformers: true   // uncomment this line if your project requires xformers
-          // triton: true   // uncomment this line if your project requires triton
-          // sageattention: true   // uncomment this line if your project requires sageattention
+          conda: "conda_env",
+          path: "app"
         }
       }
     },
+    {
+      when: "{{which('apt')}}",
+      method: "shell.run",
+      params: {
+        sudo: true,
+        message: "apt install libaio-dev espeak-ng"
+      },
+        next: "all"
+    },
+    {
+      when: "{{which('yum')}}",
+      method: "shell.run",
+      params: {
+        sudo: true,
+        message: "yum install libaio-devel espeak-ng"
+      },
+        next: "all"
+    },
+    {
+      when: "{{which('brew')}}",
+      method: "shell.run",
+      params: {
+        message: "brew install espeak-ng"
+      },
+        next: "all"
+    },
+    {
+      when: "{{which('winget')}}",
+      method: "shell.run",
+      params: {
+        sudo: true,
+        message: "winget install --id=eSpeak-NG.eSpeak-NG -e --silent --accept-source-agreements --accept-package-agreements"
+      }
+    },
+    {
+      method: "hf.download",
+      params: {
+        "path":"app",
+        "_": [ "XRXRX/X-Voice" ],
+        "local-dir": "ckpts"
+      }
+    }
   ]
 }

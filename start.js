@@ -1,35 +1,71 @@
-module.exports = {
-  daemon: true,
-  run: [
-    {
-      method: "shell.run",
-      params: {
-        venv: "env",                // Edit this to customize the venv folder path
-        env: { },                   // Edit this to customize environment variables (see documentation)
-        path: "app",                // Edit this to customize the path to start the shell from
-        message: [
-          "python app.py",    // Edit with your custom commands
-        ],
-        on: [{
-          // The regular expression pattern to monitor.
-          // When this pattern occurs in the shell terminal, the shell will return,
-          // and the script will go onto the next step.
-          "event": "/http:\/\/\\S+/",   
-
-          // "done": true will move to the next step while keeping the shell alive.
-          // "kill": true will move to the next step after killing the shell.
-          "done": true
-        }]
-      }
-    },
-    {
-      // This step sets the local variable 'url'.
-      // This local variable will be used in pinokio.js to display the "Open WebUI" tab when the value is set.
-      method: "local.set",
-      params: {
-        // the input.event is the regular expression match object from the previous step
-        url: "{{input.event[0]}}"
-      }
+const path = require('path')
+module.exports = async (kernel) => {
+  let env = {
+      PYTHONUTF8: 1,
+      LOW_MEMORY: 1
+  }
+  if (kernel.platform === "win32") {
+    env = {
+      ...env,
+      PHONEMIZER_ESPEAK_PATH: "C:\\Program Files\\eSpeak NG",
+      PHONEMIZER_ESPEAK_LIBRARY: "C:\\Program Files\\eSpeak NG\\libespeak-ng.dll",
+      ESPEAK_DATA_PATH: "C:\\Program Files\\eSpeak NG\\espeak-ng-data",
+      HF_HUB_DISABLE_SYMLINKS_WARNING: "1",
+      HF_HUB_DISABLE_SYMLINKS: "1",
     }
-  ]
+  } else if (kernel.platform === 'darwin') {
+    try {
+      let p
+      let bin = kernel.path("bin/homebrew/Cellar")
+      const matches = await fg(`${bin}/**/espeak-ng-data`, { onlyDirectories: true });
+      if (matches.length > 0) {
+        p = matches[0]
+      }
+      env.ESPEAK_DATA_PATH = p
+    } catch (err) {
+      console.error(`Error searching: ${err.message}`);
+    }
+
+    try {
+      let p
+      let bin = kernel.path("bin/homebrew/Cellar")
+      const matches = await fg(`${bin}/**/libespeak-ng.dylib`)
+      if (matches.length > 0) {
+        p = matches[0]
+      }
+      env.PHONEMIZER_ESPEAK_LIBRARY = p
+    } catch (err) {
+      console.error(`Error searching: ${err.message}`);
+    }
+  }
+  return {
+    requires: {
+      bundle: "ai",
+    },
+    daemon: true,
+    run: [
+      {
+        method: "shell.run",
+        params: {
+          conda: "conda_env",
+          env,
+          path: "app",
+          input: true,
+          message: [
+            "x-voice_infer-gradio --host 127.0.0.1 --port 7860",
+          ],
+          on: [{
+            "event": "/http:\/\/\\S+/",
+            "done": true
+          }]
+        }
+      },
+      {
+        method: "local.set",
+        params: {
+          url: "{{input.event[0]}}"
+        }
+      }
+    ]
+  }
 }
