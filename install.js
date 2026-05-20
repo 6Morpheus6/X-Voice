@@ -21,7 +21,7 @@ module.exports = {
         },
         path: "app",
         message: [
-          "conda install -y -c conda-forge pynini"
+          "conda install -y -c conda-forge pynini openjdk"
         ]
       }
     },
@@ -32,7 +32,8 @@ module.exports = {
         path: "app",
         message: [
           "uv pip install nemo_text_processing --no-deps",
-          "uv pip install -e ."
+          "uv pip install -e .",
+          "uv pip install sacremoses cdifflib"
         ]
       }
     },
