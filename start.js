@@ -14,29 +14,9 @@ module.exports = async (kernel) => {
       HF_HUB_DISABLE_SYMLINKS: "1",
     }
   } else if (kernel.platform === 'darwin') {
-    try {
-      let p
-      let bin = kernel.path("bin/homebrew/Cellar")
-      const matches = await fg(`${bin}/**/espeak-ng-data`, { onlyDirectories: true });
-      if (matches.length > 0) {
-        p = matches[0]
-      }
-      env.ESPEAK_DATA_PATH = p
-    } catch (err) {
-      console.error(`Error searching: ${err.message}`);
-    }
-
-    try {
-      let p
-      let bin = kernel.path("bin/homebrew/Cellar")
-      const matches = await fg(`${bin}/**/libespeak-ng.dylib`)
-      if (matches.length > 0) {
-        p = matches[0]
-      }
-      env.PHONEMIZER_ESPEAK_LIBRARY = p
-    } catch (err) {
-      console.error(`Error searching: ${err.message}`);
-    }
+    const bin = kernel.path("bin/homebrew/Cellar")
+    env.ESPEAK_DATA_PATH = `${bin}/espeak-ng/1.52.0/share/espeak-ng-data`
+    env.PHONEMIZER_ESPEAK_LIBRARY = `${bin}/espeak-ng/1.52.0/lib/libespeak-ng.dylib`
   }
   return {
     requires: {
