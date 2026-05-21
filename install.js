@@ -21,7 +21,7 @@ module.exports = {
         },
         path: "app",
         message: [
-          "conda install -y -c conda-forge pynini openjdk"
+          "conda install -y -c conda-forge pynini openjdk ffmpeg"
         ]
       }
     },
